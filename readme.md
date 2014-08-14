@@ -2,6 +2,8 @@ So, why another wiki language? I needed a wiki format for my [claims.io](http://
 
 Installation
 ----------
+Coming very soon...
+
 To install the Wikid.js parser execute one of the following commands.
 
 Node.js install:
