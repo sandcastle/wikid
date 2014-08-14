@@ -35,7 +35,7 @@ var html = Wikid.toHtml('*hello* _world_!');
 
 _If you have some free time, feel free to send a PR for `Wikid.toText(text)` (a function for stripping out the markup)._
 
-Wiki Format
+Wiki Markup
 ----------
 _Coming soon_
 
@@ -96,22 +96,22 @@ Text:
         ;
     TextUnformatted
         =   UnicodeText - 
-            ( TextLineSeparator 
-            | NoWiki
-            | TextFormatted
+            (   TextLineSeparator 
+            |   NoWiki
+            |   TextFormatted
             )
         ;
     TextItalic
         =   Plus , 
-            (   { UnicodeText
-                | TextBold
+            (   {   UnicodeText
+                |   TextBold
                 }+
             ) - ( Plus | TextLineSeparator ) , Plus
         ;
     TextBold
         =   Star , 
-            (   { UnicodeText
-                | TextItalic
+            (   {   UnicodeText
+                |   TextItalic
                 }+
             ) - ( Star | TextLineSeparator ) , Star
         ;
@@ -213,10 +213,6 @@ Basics:
         ;
     EOF
         =   ?end of file?
-        ;
-        
-    Escaped
-        =   "\" , ( Star | Hash | Hyphen | Plus )
         ;
     Star    
         =   "*" 
