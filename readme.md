@@ -1,6 +1,6 @@
-So, why another markup language? I needed a wiki format for my [claims.io](http://claims.io/) product. 
+So, why another markup language? I needed a js based wiki parser for my [claims.io](http://claims.io/) product. 
 
-For most non-technical users [Markdown](http://daringfireball.net/projects/markdown/) is not a good choice (and double space line endings annoy me). So after using the wiki in both [JIRA](https://www.atlassian.com/software/jira) and [You Track](http://www.jetbrains.com/youtrack/) on a daily basis for many years I decided to take the best parts of both languages and provide a free javascript option.
+For most non-technical users [Markdown](http://daringfireball.net/projects/markdown/) can be hard to grasp (the double space line endings annoy me). I have used the wikis in both [JIRA](https://www.atlassian.com/software/jira) and [You Track](http://www.jetbrains.com/youtrack/) for many years, so decided to take the best parts of both languages and provide a javascript option.
 
 Installation
 ----------
