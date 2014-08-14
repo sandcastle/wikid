@@ -1,0 +1,33 @@
+{
+  "name": "wikid",
+  "version": "0.0.1",
+  "description": "A javascript wiki parser",
+  "main": "Wikid.js",
+  "scripts": {
+    "build": "grunt build",
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sandcastle/wikid.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sandcastle/wikid/issues"
+  },
+  "keywords": [
+    "js",
+    "wiki",
+    "parser",
+    "wikimedia"
+  ],
+  "author": "Glenn Morton",
+  "license": "ISC",
+  "homepage": "https://github.com/sandcastle/wikid",
+  "dependencies": {},
+  "devDependencies": {
+    "gulp": "^3.8.7",
+    "karma": "^0.12.21",
+    "karma-jasmine": "^0.1.5",
+    "karma-phantomjs-launcher": "^0.1.4"
+  }
+}
