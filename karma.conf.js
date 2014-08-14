@@ -7,7 +7,15 @@ module.exports = function(config) {
 		// list of files / patterns to load in the browser
 		files: [
 			'lib/**/*.js',
-			'tests/**/*.js'
+			'tests/**/*.js',
+
+            // fixtures
+            {
+                pattern: 'tests/fixtures/*.*',
+                watched: true,
+                served:  true,
+                included: false
+            }
 		],
 
 		// testing framework to use (jasmine/mocha/qunit/...)
