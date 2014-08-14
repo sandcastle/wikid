@@ -2,7 +2,7 @@ So, why another wiki language? I needed a wiki format for my [claims.io](http://
 
 Installation
 ----------
-Coming very soon...
+_Coming soon_
 
 To install the Wikid.js parser execute one of the following commands.
 
@@ -28,12 +28,14 @@ var html = Wikid.toHtml('*hello* _world_!');
 
 Wiki Format
 ----------
+_Coming soon_
+
 The Wikid wiki format is based off the You Track and JIRA wiki formats.
 
-_Pages coming soon..._
 
 EBNF
 ----------
+_Coming soon_
 
 The wiki format conforms to the following EBNF ([Extended Backus-Naur Form](http://en.wikipedia.org/wiki/Extended_Backus-Naur_Form)) definition.
 
