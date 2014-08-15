@@ -188,4 +188,39 @@ describe('Parser', function(){
         });
     });
 
+	describe('tryMakeTextParagraph', function () {
+
+		function getTextResult(text){
+			var iterator = Tokenizer.createIterator(text);
+			return Parser.tryMakeTextParagraph(iterator);
+		}
+
+		it('should parse unformatted single world line', function () {
+
+			var result = getTextResult('hello');
+
+			expect(isSuccess(result)).toBe(true);
+			expect(result.text.parts.length).toBe(1);
+			expect(result.text.parts[0].value).toBe('hello');
+		});
+
+		it('should parse unformatted multi word line', function () {
+
+			var result = getTextResult('hello world today');
+
+			expect(isSuccess(result)).toBe(true);
+			expect(result.text.parts.length).toBe(1);
+			expect(result.text.parts[0].value).toBe('hello world today');
+		});
+
+		it('should parse special character with no closing', function () {
+
+			var result = getTextResult('hello *world today');
+
+			expect(isSuccess(result)).toBe(true);
+			expect(result.text.parts.length).toBe(1);
+			expect(result.text.parts[0].value).toBe('hello *world today');
+		});
+	});
+
 });
