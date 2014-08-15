@@ -2,6 +2,30 @@
 
 describe('Parser', function(){
 
+	describe('makeArticle', function(){
+
+		function getArticleResult(text) {
+            var iterator = Tokenizer.createIterator(text);
+            return Parser.makeArticle(iterator);
+        }
+
+        it('should return paragraph', function(){
+           var article = getArticleResult('h1. test');
+
+            expect(article).toBeDefined();
+            expect(article.paragraphs).toBeDefined();
+            expect(article.paragraphs.length).toBe(1);
+        });
+
+		it('should return multiple paragraphs', function(){
+
+			var article = getArticleResult('h1. Welcome!\nh2. All about wiki\'s');
+			expect(article).toBeDefined();
+			expect(article.paragraphs).toBeDefined();
+			expect(article.paragraphs.length).toBe(3);
+		});
+	});
+
 	describe('makeParagraph', function(){
 
 		function getParagraphResult(text){
@@ -98,5 +122,70 @@ describe('Parser', function(){
 			expect(isSuccess(getHeadingResult('h1.', {}))).toBe(false);
 		});
 	});
+
+    describe('tryMakeList',function(){
+
+        function getListResult(text){
+            var iterator = Tokenizer.createIterator(text);
+            return Parser.tryMakeList(iterator);
+        }
+
+        it('should parse single line unordered (hyphen) list', function(){
+
+            var result = getListResult('- an item');
+
+            expect(isSuccess(result)).toBe(true);
+            expect(result.list.kind).toBe(ListKinds.unordered);
+            expect(result.list.items).toBeDefined();
+            expect(result.list.items.length).toBe(1);
+            expect(result.list.items[0]).toBe('an item');
+        });
+
+        it('should parse single line unordered (star) list', function(){
+
+            var result = getListResult('* an item');
+
+            expect(isSuccess(result)).toBe(true);
+            expect(result.list.kind).toBe(ListKinds.unordered);
+            expect(result.list.items).toBeDefined();
+            expect(result.list.items.length).toBe(1);
+            expect(result.list.items[0]).toBe('an item');
+        });
+
+        it('should parse multi line unordered list', function(){
+
+            var result = getListResult('- item one \n-  item two\n- item three');
+
+            expect(isSuccess(result)).toBe(true);
+            expect(result.list.kind).toBe(ListKinds.unordered);
+            expect(result.list.items.length).toBe(3);
+            expect(result.list.items[0]).toBe('item one ');
+            expect(result.list.items[1]).toBe('item two');
+            expect(result.list.items[2]).toBe('item three');
+        });
+
+        it('should parse single line ordered list', function(){
+
+            var result = getListResult('# an item');
+
+            expect(isSuccess(result)).toBe(true);
+            expect(result.list.kind).toBe(ListKinds.ordered);
+            expect(result.list.items).toBeDefined();
+            expect(result.list.items.length).toBe(1);
+            expect(result.list.items[0]).toBe('an item');
+        });
+
+        it('should parse multi line ordered list', function(){
+
+            var result = getListResult('# item one \n#  item two\n# item three');
+
+            expect(isSuccess(result)).toBe(true);
+            expect(result.list.kind).toBe(ListKinds.ordered);
+            expect(result.list.items.length).toBe(3);
+            expect(result.list.items[0]).toBe('item one ');
+            expect(result.list.items[1]).toBe('item two');
+            expect(result.list.items[2]).toBe('item three');
+        });
+    });
 
 });
