@@ -1,19 +1,78 @@
-var gulp = require('gulp'),
-	karma = require('gulp-karma'),
-	plumber = require('gulp-plumber');
 
-var testFiles = [
-	'lib/**/*.js',
-	'tests/**/*.js'
-];
+var fs			= require('fs'),
+	gulp 		= require('gulp'),
+	karma 		= require('gulp-karma'),
+	plumber 	= require('gulp-plumber'),
+	rimraf 		= require('gulp-rimraf'),
+	concat 		= require('gulp-concat-util'),
+	uglify 		= require('gulp-uglify'),
+	rename 		= require('gulp-rename'),
+	size	 	= require('gulp-size'),
+	gutil 		= require('gulp-util');
 
+var files = {
+
+	// all files for executing tests
+	test: [
+		'lib/**/*.js',
+		'tests/**/*.js'
+	],
+
+	// all files for client build
+	client: [
+		'lib/**/*.js'
+	]
+};
+
+// clean
+gulp.task('clean', function (cb) {
+	rimraf('./dest', cb);
+});
+
+// test
 gulp.task('test', function() {
-	return gulp.src(testFiles)
+	return gulp.src(files.test)
 		.pipe(plumber())
 		.pipe(karma({ configFile: 'karma.conf.js' }))
 		.on('error', function(err) { throw err; });
 });
 
-gulp.task('default', [
-	'test'
+// output files
+gulp.task('output', function(){
+	return gulp.src(files.client)
+		.pipe(concat('Wikid.js', { process: normalizeFiles }))
+		.pipe(concat.header(fs.readFileSync('./build/header')))
+		.pipe(concat.footer(fs.readFileSync('./build/footer')))
+		.pipe(size())
+		.pipe(gulp.dest('./dist/'))
+		.pipe(uglify())
+		.pipe(rename('Wikid.min.js'))
+		.pipe(size())
+		.pipe(gulp.dest('./dist/'))
+		.on('error', gutil.log);
+});
+
+
+gulp.task('build', [
+	'clean',
+	'output'
 ]);
+
+
+gulp.task('default', [
+	'clean',
+	'test',
+	'output'
+]);
+
+/**
+ * Trims the files and removes 'use strict' statements.
+ */
+function normalizeFiles(src){
+
+	//trim the file
+	src = src.trim() + '\n';
+
+	//remove duplicate 'use strict' statements
+	return src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1');
+}
