@@ -15,3 +15,4 @@ node_modules
 ## File-based project format
 *.ipr
 *.iws
+dest
