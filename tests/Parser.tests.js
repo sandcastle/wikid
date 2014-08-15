@@ -221,6 +221,10 @@ describe('Parser', function(){
 			expect(result.text.parts.length).toBe(1);
 			expect(result.text.parts[0].value).toBe('hello *world today');
 		});
+
+		it('should fail', function () {
+			expect(true).toBe(false);
+		});
 	});
 
 });
