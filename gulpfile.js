@@ -1,5 +1,6 @@
 var gulp = require('gulp'),
-	karma = require('gulp-karma');
+	karma = require('gulp-karma'),
+	plumber = require('gulp-plumber');
 
 var testFiles = [
 	'lib/**/*.js',
@@ -7,21 +8,12 @@ var testFiles = [
 ];
 
 gulp.task('test', function() {
-
 	return gulp.src(testFiles)
-		.pipe(karma({
-			configFile: 'karma.conf.js',
-			action: 'run'
-		}))
-		.on('error', function(err) {
-			throw err;
-		});
+		.pipe(plumber())
+		.pipe(karma({ configFile: 'karma.conf.js' }))
+		.on('error', function(err) { throw err; });
 });
 
-gulp.task('default', function() {
-	gulp.src(testFiles)
-		.pipe(karma({
-			configFile: 'karma.conf.js',
-			action: 'watch'
-		}));
-});
+gulp.task('default', [
+	'test'
+]);
