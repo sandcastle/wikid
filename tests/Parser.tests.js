@@ -135,7 +135,7 @@ describe('Parser', function(){
             var result = getListResult('- an item');
 
             expect(isSuccess(result)).toBe(true);
-            expect(result.list.kind).toBe(ListKinds.unordered);
+            expect(result.list.kind).toBe(ListKinds.ul);
             expect(result.list.items).toBeDefined();
             expect(result.list.items.length).toBe(1);
             expect(result.list.items[0]).toBe('an item');
@@ -146,7 +146,7 @@ describe('Parser', function(){
             var result = getListResult('* an item');
 
             expect(isSuccess(result)).toBe(true);
-            expect(result.list.kind).toBe(ListKinds.unordered);
+            expect(result.list.kind).toBe(ListKinds.ul);
             expect(result.list.items).toBeDefined();
             expect(result.list.items.length).toBe(1);
             expect(result.list.items[0]).toBe('an item');
@@ -157,7 +157,7 @@ describe('Parser', function(){
             var result = getListResult('- item one \n-  item two\n- item three');
 
             expect(isSuccess(result)).toBe(true);
-            expect(result.list.kind).toBe(ListKinds.unordered);
+            expect(result.list.kind).toBe(ListKinds.ul);
             expect(result.list.items.length).toBe(3);
             expect(result.list.items[0]).toBe('item one ');
             expect(result.list.items[1]).toBe('item two');
@@ -169,7 +169,7 @@ describe('Parser', function(){
             var result = getListResult('# an item');
 
             expect(isSuccess(result)).toBe(true);
-            expect(result.list.kind).toBe(ListKinds.ordered);
+            expect(result.list.kind).toBe(ListKinds.ol);
             expect(result.list.items).toBeDefined();
             expect(result.list.items.length).toBe(1);
             expect(result.list.items[0]).toBe('an item');
@@ -180,7 +180,7 @@ describe('Parser', function(){
             var result = getListResult('# item one \n#  item two\n# item three');
 
             expect(isSuccess(result)).toBe(true);
-            expect(result.list.kind).toBe(ListKinds.ordered);
+            expect(result.list.kind).toBe(ListKinds.ol);
             expect(result.list.items.length).toBe(3);
             expect(result.list.items[0]).toBe('item one ');
             expect(result.list.items[1]).toBe('item two');
