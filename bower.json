@@ -1,0 +1,25 @@
+{
+  "name": "wikid",
+  "version": "0.1.1",
+  "homepage": "https://github.com/sandcastle/wikid",
+  "authors": [
+    "Glenn Morton"
+  ],
+  "description": "A javascript wiki parser",
+  "main": "dist",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "js",
+    "wiki",
+    "parser"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules"
+  ]
+}

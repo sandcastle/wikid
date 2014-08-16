@@ -1,11 +1,11 @@
 {
   "name": "wikid",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "A javascript wiki parser",
   "main": "Wikid.js",
   "scripts": {
-    "build": "grunt build",
-    "test": "grunt test"
+    "build": "gulp",
+    "test": "gulp test"
   },
   "repository": {
     "type": "git",
@@ -17,8 +17,7 @@
   "keywords": [
     "js",
     "wiki",
-    "parser",
-    "wikimedia"
+    "parser"
   ],
   "author": "Glenn Morton",
   "license": "ISC",
