@@ -14,13 +14,18 @@ var files = {
 
 	// all files for executing tests
 	test: [
-		'lib/**/*.js',
 		'tests/**/*.js'
 	],
 
 	// all files for client build
-	client: [
-		'lib/**/*.js'
+	output: [
+		'lib/Wikid.js',
+		'lib/TokenKinds.js',
+		'lib/Token.js',
+		'lib/TokenIterator.js',
+		'lib/Tokenizer.js',
+		'lib/AST.js',
+		'lib/Parser.js'
 	]
 };
 
@@ -31,14 +36,14 @@ gulp.task('clean', function (cb) {
 
 // test
 gulp.task('test', function() {
-	return gulp.src(files.test)
+	return gulp.src(files.output.concat(files.test))
 		.pipe(karma({ configFile: 'karma.conf.js' }))
 		.on('error', gutil.log);
 });
 
 // output files
 gulp.task('output', function(){
-	return gulp.src(files.client)
+	return gulp.src(files.output)
 		.pipe(concat('Wikid.js', { process: normalizeFiles }))
 		.pipe(concat.header(fs.readFileSync('./build/header')))
 		.pipe(concat.footer(fs.readFileSync('./build/footer')))
