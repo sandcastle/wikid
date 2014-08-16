@@ -2,13 +2,13 @@
 var fs			= require('fs'),
 	gulp 		= require('gulp'),
 	karma 		= require('gulp-karma'),
-	plumber 	= require('gulp-plumber'),
 	rimraf 		= require('gulp-rimraf'),
 	concat 		= require('gulp-concat-util'),
 	uglify 		= require('gulp-uglify'),
 	rename 		= require('gulp-rename'),
 	size	 	= require('gulp-size'),
-	gutil 		= require('gulp-util');
+	gutil 		= require('gulp-util'),
+	formatter 	= require('gulp-esformatter');
 
 var files = {
 
@@ -32,9 +32,8 @@ gulp.task('clean', function (cb) {
 // test
 gulp.task('test', function() {
 	return gulp.src(files.test)
-		.pipe(plumber())
 		.pipe(karma({ configFile: 'karma.conf.js' }))
-		.on('error', function(err) { throw err; });
+		.on('error', gutil.log);
 });
 
 // output files
@@ -43,6 +42,7 @@ gulp.task('output', function(){
 		.pipe(concat('Wikid.js', { process: normalizeFiles }))
 		.pipe(concat.header(fs.readFileSync('./build/header')))
 		.pipe(concat.footer(fs.readFileSync('./build/footer')))
+		.pipe(formatter({indent: {value: '  '} }))
 		.pipe(size())
 		.pipe(gulp.dest('./dist/'))
 		.pipe(uglify())

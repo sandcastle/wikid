@@ -27,8 +27,8 @@
   "devDependencies": {
     "gulp": "^3.8.7",
     "gulp-concat-util": "^0.2.3",
+    "gulp-esformatter": "^1.0.0",
     "gulp-karma": "0.0.4",
-    "gulp-plumber": "^0.6.4",
     "gulp-rename": "^1.2.0",
     "gulp-rimraf": "^0.1.0",
     "gulp-size": "^1.0.0",

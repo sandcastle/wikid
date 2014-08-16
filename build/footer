@@ -1,15 +1,22 @@
 
-if (typeof define !== 'undefined' && define.amd) {
-  // AMD
-  define([], function () {
-    return Wikid
-  })
-} else if (typeof module !== 'undefined' && module.exports) {
-  // CommonJS
-  module.exports = Wikid
-} else {
-  // Script tag
-  root.Wikid = Wikid
-}
+	/* =================== EXPORTS =================== */
+
+	if (typeof define !== 'undefined' && define.amd) {
+
+		// AMD
+		define([], function () {
+			return Wikid
+		})
+	}
+	else if (typeof module !== 'undefined' && module.exports) {
+
+		// CommonJS
+		module.exports = Wikid
+	}
+	else {
+
+		// Script tag
+		root.Wikid = Wikid
+	}
 
 }(this));

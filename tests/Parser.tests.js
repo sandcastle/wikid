@@ -22,7 +22,7 @@ describe('Parser', function(){
 			var article = getArticleResult('h1. Welcome!\nh2. All about wiki\'s');
 			expect(article).toBeDefined();
 			expect(article.paragraphs).toBeDefined();
-			expect(article.paragraphs.length).toBe(3);
+			expect(article.paragraphs.length).toBe(2);
 		});
 	});
 
