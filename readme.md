@@ -3,7 +3,8 @@ Wikid.js
 
 > A js based wiki parser
 
-[![Build Status](https://travis-ci.org/sandcastle/wikid.png)](https://travis-ci.org/sandcastle/wikid.png)
+[![Build Status](https://travis-ci.org/sandcastle/wikid.png)](https://travis-ci.org/sandcastle/wikid.png) 
+[![Bower version](https://badge.fury.io/bo/wikid.svg)](http://badge.fury.io/bo/wikid)
 
 So, why another markup language? I needed a js based wiki parser for my [claims.io](http://claims.io/) product. 
 
@@ -11,20 +12,18 @@ For most non-technical users [Markdown](http://daringfireball.net/projects/markd
 
 Installation
 ----------
-_Coming soon_
-
 To install the Wikid.js parser execute one of the following commands.
-
-Node.js install:
-
-```
-npm install wikid --save
-```
   
 Client side install:
 
 ```
 bower install wikid --save
+```
+
+Node.js install (_coming soon_):
+
+```
+npm install wikid --save
 ```
 
 Usage
