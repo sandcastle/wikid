@@ -16,6 +16,3 @@ node_modules
 ## File-based project format
 *.ipr
 *.iws
-
-## build
-dist
