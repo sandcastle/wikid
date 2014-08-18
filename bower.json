@@ -19,12 +19,11 @@
   ],
   "license": "MIT",
   "ignore": [
-    "**/.*",
     "node_modules",
-	"package.json",
-	"build",
-	"lib",
-	"tests",
-	"*.js"
+	  "package.json",
+	  "build",
+	  "lib",
+	  "tests",
+	  "*.js"
   ]
 }
