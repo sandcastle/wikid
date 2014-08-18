@@ -195,6 +195,18 @@ describe('Parser', function(){
 			return Parser.tryMakeTextParagraph(iterator);
 		}
 
+		function expectTextFormatPart(text, kind, value){
+
+			var result = getTextResult(text);
+
+			expect(isSuccess(result)).toBe(true);
+			expect(result.text.parts.length).toBe(1);
+			expect(result.text.parts[0].kind).toBe(kind);
+			expect(result.text.parts[0].value.length).toBe(1);
+			expect(result.text.parts[0].value[0].kind).toBe(TextKinds.none);
+			expect(result.text.parts[0].value[0].value).toBe(value);
+		}
+
 		it('should parse unformatted single world line', function () {
 
 			var result = getTextResult('hello');
@@ -220,6 +232,41 @@ describe('Parser', function(){
 			expect(isSuccess(result)).toBe(true);
 			expect(result.text.parts.length).toBe(1);
 			expect(result.text.parts[0].value).toBe('hello *world today');
+		});
+
+		it('should parse bold text', function () {
+			expectTextFormatPart('*hello*', TextKinds.b, 'hello');
+		});
+
+		it('should parse italic text', function () {
+			expectTextFormatPart('+hello+', TextKinds.em, 'hello');
+		});
+
+		it('should parse nested format text', function () {
+
+			var result = getTextResult('*hello +world+ today*');
+
+			expect(isSuccess(result)).toBe(true);
+			expect(result.text.parts.length).toBe(1);
+
+			// outer bold
+			var bold = result.text.parts[0];
+			expect(bold.kind).toBe(TextKinds.b);
+			expect(bold.value.length).toBe(3);
+
+			// nested unformatted
+			expect(bold.value[0].kind).toBe(TextKinds.none);
+			expect(bold.value[0].value).toBe('hello ');
+
+			// nested em
+			expect(bold.value[1].kind).toBe(TextKinds.em);
+			expect(bold.value[1].value.length).toBe(1);
+			expect(bold.value[1].value[0].kind).toBe(TextKinds.none);
+			expect(bold.value[1].value[0].value).toBe('world');
+
+			// nested unformatted
+			expect(bold.value[2].kind).toBe(TextKinds.none);
+			expect(bold.value[2].value).toBe(' today');
 		});
 	});
 

@@ -64,23 +64,59 @@
 
     function appendText(para) {
 
-      var part;
-
-      for (j = 0; j < para.content.parts.length; j++) {
-
-        part = para.content.parts[j];
-
-        if (part.kind == TextKinds.unformatted) {
-          output += part.value;
-        }
-
-        // TODO: add support for other kinds
-      }
+      // append nested text parts
+      output += getTextFromParts(para.content.parts);
 
       // append a line break, if not eof
       if (i < (article.paragraphs.length - 1)) {
         output += '<br>';
       }
+    }
+
+    function getTextFromParts(parts) {
+
+      var part,
+        text = '';
+
+      for (j = 0; j < parts.length; j++) {
+
+        part = parts[j];
+
+        // skip nesting if not formatted
+        if (part.kind == TextKinds.none) {
+          text += part.value;
+          continue;
+        }
+
+        var tag = '';
+
+        switch (part.kind) {
+
+          case TextKinds.b:
+            tag = 'b';
+            break;
+          case TextKinds.em:
+            tag = 'em';
+            break;
+          case TextKinds.ins:
+            tag = 'ins';
+            break;
+          case TextKinds.del:
+            tag = 'del';
+            break;
+          case TextKinds.sup:
+            tag = 'sup';
+            break;
+          case TextKinds.sub:
+            tag = 'sub';
+            break;
+        }
+
+        // create with nest values if required
+        text += format('<{0}>{1}</{0}>', tag, getTextFromParts(part.value));
+      }
+
+      return text;
     }
 
     function appendHeading(para) {
@@ -723,7 +759,13 @@
 
   function TextKinds() {
   }
-  TextKinds.unformatted = 0;
+  TextKinds.none = 0;
+  TextKinds.b = 1;
+  TextKinds.em = 2;
+  TextKinds.ins = 3;
+  TextKinds.del = 4;
+  TextKinds.sup = 5;
+  TextKinds.sub = 6;
 
   /**
    * @description
@@ -829,48 +871,66 @@
    * Tries to parse a paragraph of text.
    *
    * @param {TokenIterator} iterator The token iterator.
+   * @returns {Object}
    */
   Parser.tryMakeTextParagraph = function(iterator) {
 
-    return consumeIf(iterator, tryConsumeText);
-
-    function tryConsumeText(iterator) {
-
-      var parts = [];
-
-      while (true) {
-
-        var result = consumeIf(iterator, Parser.tryMakeTextPart);
-
-        // part will be null when we hit a new line
-        if (!isSuccess(result) || result.part === null) {
-          break;
-        }
-
-        // if the last part and current result are unformatted, just append
-        if (parts.length > 0 && result.part.kind == TextKinds.unformatted) {
-
-          var lastPart = parts[parts.length - 1];
-          if (lastPart.kind == TextKinds.unformatted) {
-            lastPart.value += result.part.value;
-            continue;
-          }
-        }
-
-        parts.push(result.part);
-      }
-
-      if (parts.length === 0) {
-        return {
-          success: false
-        };
-      }
-
+    var parts = Parser.tryMakeTextParts(iterator);
+    if (parts.length === 0) {
       return {
-        success: true,
-        text: new TextParagraph(parts)
+        success: false
       };
     }
+
+    return {
+      success: true,
+      text: new TextParagraph(parts)
+    };
+  };
+
+  /**
+   * @description
+   * Tries to parse one or more text parts.
+   *
+   * @param {TokenIterator} iterator The token iterator.
+   * @returns {TextPart[]}
+   */
+  Parser.tryMakeTextParts = function(iterator) {
+
+    var parts = [];
+
+    while (true) {
+
+      var result = consumeIf(iterator, Parser.tryMakeTextPart);
+
+      // part will be null when we hit a new line
+      if (!isSuccess(result) || result.part === null) {
+        break;
+      }
+      // if the last part and current result are unformatted, just append
+      if (parts.length > 0 && result.part.kind == TextKinds.none) {
+
+        var lastPart = parts[parts.length - 1];
+        if (lastPart.kind == TextKinds.none) {
+          lastPart.value += result.part.value;
+          continue;
+        }
+      }
+
+      // if formatted, check for nesting
+      if (result.part.kind != TextKinds.none) {
+
+        // create an iterator from the tokens
+        var nestedIterator = new TokenIterator(result.part.value || []);
+
+        // overwrite the text with parts
+        result.part.value = Parser.tryMakeTextParts(nestedIterator);
+      }
+
+      parts.push(result.part);
+    }
+
+    return parts;
   };
 
   /**
@@ -882,64 +942,53 @@
    */
   Parser.tryMakeTextPart = function(iterator) {
 
-    return consumeIf(iterator, tryConsumeTextPart);
-
-    function tryConsumeTextPart(iterator) {
-
-      // abort if EOF
-      if (iterator.eof()) {
-        return {
-          success: false
-        };
-      }
-
-      var token = iterator.peek();
-
-      // if we find the end of the paragraph, then stop
-      if (token.kind == TokenKinds.newline) {
-
-        iterator.consume();
-
-        return {
-          success: true,
-          part: null
-        };
-      }
-
-      var part,
-        unformatted = '';
-
-      // try parse formatted part
-      if (token.kind == TokenKinds.special) {
-
-        var result = consumeIf(iterator, Parser.tryMakeFormattedTextPart);
-
-        if (isSuccess(result)) {
-          return {
-            success: true,
-            part: result.part
-          };
-        }
-
-        //consume the special token that did not match any format
-        unformatted = iterator.consume().text;
-      }
-
-      // consume till the next special character
-      unformatted += iterator.consumeConcatenatedWhile(function(token) {
-        return (token.kind != TokenKinds.special && token.kind != TokenKinds.newline);
-      });
-
-      // return unformatted if found
-      if (unformatted.length > 0) {
-        part = new TextPart(TextKinds.unformatted, unformatted);
-      }
-
+    // abort if eof
+    if (iterator.eof()) {
       return {
-        success: (part !== null),
-        part: part
+        success: false
       };
     }
+
+    var token = iterator.peek();
+
+    // if we find the end of the paragraph, then stop
+    if (token.kind == TokenKinds.newline) {
+
+      iterator.consume();
+
+      return {
+        success: true,
+        part: null
+      };
+    }
+
+    // try parse formatted part
+    var result = consumeIf(iterator, Parser.tryMakeFormatPart);
+    if (isSuccess(result)) {
+      return {
+        success: true,
+        part: result.part
+      };
+    }
+
+    //consume the special token that did not match any format
+    var unformatted = iterator.consume().text;
+
+    // consume till the next special character
+    unformatted += iterator.consumeConcatenatedWhile(function(token) {
+      return (token.kind != TokenKinds.special && token.kind != TokenKinds.newline);
+    });
+
+    // return unformatted if found
+    var part;
+    if (unformatted.length > 0) {
+      part = new TextPart(TextKinds.none, unformatted);
+    }
+
+    return {
+      success: (part !== null),
+      part: part
+    };
   };
 
   /**
@@ -949,27 +998,44 @@
    * @param {TokenIterator} iterator The token iterator.
    * @returns {object}
    */
-  Parser.tryMakeFormattedTextPart = function(iterator) {
+  Parser.tryMakeFormatPart = function(iterator) {
 
-    var result,
-      token = iterator.peek();
+    var result;
 
     // bold
-    if (token.text === '*') {
-
-      result = consumeIf(iterator, Parser.tryMakeBoldPart);
-      if (isSuccess(result)) {
-        return result;
-      }
+    result = Parser.tryMakeFormat(iterator, TextKinds.b, '*');
+    if (isSuccess(result)) {
+      return result;
     }
 
-    // italic
-    if (token.text == '_') {
+    // em
+    result = Parser.tryMakeFormat(iterator, TextKinds.em, '+');
+    if (isSuccess(result)) {
+      return result;
+    }
 
-      result = consumeIf(iterator, Parser.tryMakeItalicPart);
-      if (isSuccess(result)) {
-        return result;
-      }
+    // underline
+    result = Parser.tryMakeFormat(iterator, TextKinds.ins, '_');
+    if (isSuccess(result)) {
+      return result;
+    }
+
+    // strike through
+    result = Parser.tryMakeFormat(iterator, TextKinds.del, '-');
+    if (isSuccess(result)) {
+      return result;
+    }
+
+    // super script
+    result = Parser.tryMakeFormat(iterator, TextKinds.sup, '^');
+    if (isSuccess(result)) {
+      return result;
+    }
+
+    // sub script
+    result = Parser.tryMakeFormat(iterator, TextKinds.sub, '~');
+    if (isSuccess(result)) {
+      return result;
     }
 
     return {
@@ -977,16 +1043,58 @@
     };
   };
 
-  Parser.tryMakeBoldPart = function(iterator) {
-    return {
-      success: false
-    };
-  };
+  /**
+   * @description
+   * Tries to parse a formatted text part.
+   *
+   * @param {TokenIterator} iterator The token iterator.
+   * @param {number} kind The kind of text part.
+   * @param {string} char The format char that wraps text.
+   * @returns {object}
+   */
+  Parser.tryMakeFormat = function(iterator, kind, char) {
 
-  Parser.tryMakeItalicPart = function(iterator) {
-    return {
-      success: false
-    };
+    // ensure the opening char is found
+    if (iterator.eof() || iterator.peek().text !== char) {
+      return {
+        success: false
+      };
+    }
+
+    return consumeIf(iterator, tryConsumeFormatPart);
+
+    function tryConsumeFormatPart(iterator) {
+
+      //consume opening token
+      iterator.consume();
+
+      var found = false,
+        tokens = [];
+
+      while (true) {
+
+        // if eof or end of line reached, we didn't find the closing token
+        if (iterator.eof() || iterator.peek().kind == TokenKinds.newline) {
+          found = false;
+          break;
+        }
+
+        var token = iterator.consume();
+
+        // if we find a closing token, success!
+        if (token.text === char) {
+          found = true;
+          break;
+        }
+
+        tokens.push(token);
+      }
+
+      return {
+        success: found,
+        part: (found ? new TextPart(kind, tokens) : null)
+      };
+    }
   };
 
   /**
@@ -1173,6 +1281,17 @@
     }
 
     return result;
+  }
+
+  function consumeLineAsTokens(iterator) {
+
+    var tokens = [];
+
+    while (!iterator.eof() && iterator.peek().kind != TokenKinds.newline) {
+      tokens.push(iterator.consume());
+    }
+
+    return tokens;
   }
 
   /**
