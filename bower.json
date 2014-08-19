@@ -1,6 +1,6 @@
 {
   "name": "wikid",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "homepage": "https://github.com/sandcastle/wikid",
   "authors": [
     "Glenn Morton"
@@ -20,11 +20,12 @@
   "license": "MIT",
   "ignore": [
     "node_modules",
-	  "package.json",
-	  "build",
-	  "lib",
-	  "tests",
-	  "gulpfile.js",
+	"package.json",
+	"build",
+	"lib",
+	"tests",
+	"coverage",
+	"gulpfile.js",
     "karma.conf.js"
   ]
 }

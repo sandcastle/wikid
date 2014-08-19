@@ -81,8 +81,8 @@ describe('Parser', function(){
 			expect(getRuleResult('----')).toBe(true);
 		});
 
-		it('should return true for valid rule', function(){
-			expect(getRuleResult('----  ')).toBe(true);
+		it('should return true for valid rule and forgive blanks', function(){
+			expect(getRuleResult('  ----  ')).toBe(true);
 		});
 
 		it('should return false if no rule', function(){
@@ -108,6 +108,14 @@ describe('Parser', function(){
 			for (var i = 1; i <= 6; i++) {
 				expectValidHeading(i);
 			}
+		});
+
+		it('should parse heading and forgive blanks', function(){
+
+			var result = getHeadingResult('  h2. Welcome!  ');
+			expect(isSuccess(result)).toBe(true);
+			expect(result.heading.number).toBe(2);
+			expect(result.heading.text).toBe('Welcome!');
 		});
 
 		it('should return false if invalid heading number', function(){
@@ -154,12 +162,12 @@ describe('Parser', function(){
 
         it('should parse multi line unordered list', function(){
 
-            var result = getListResult('- item one \n-  item two\n- item three');
+            var result = getListResult('- item one\n-  item two\n- item three');
 
             expect(isSuccess(result)).toBe(true);
             expect(result.list.kind).toBe(ListKinds.ul);
             expect(result.list.items.length).toBe(3);
-            expect(result.list.items[0]).toBe('item one ');
+            expect(result.list.items[0]).toBe('item one');
             expect(result.list.items[1]).toBe('item two');
             expect(result.list.items[2]).toBe('item three');
         });
@@ -177,16 +185,79 @@ describe('Parser', function(){
 
         it('should parse multi line ordered list', function(){
 
-            var result = getListResult('# item one \n#  item two\n# item three');
+            var result = getListResult('# item one\n#  item two\n# item three');
 
             expect(isSuccess(result)).toBe(true);
             expect(result.list.kind).toBe(ListKinds.ol);
             expect(result.list.items.length).toBe(3);
-            expect(result.list.items[0]).toBe('item one ');
+            expect(result.list.items[0]).toBe('item one');
             expect(result.list.items[1]).toBe('item two');
             expect(result.list.items[2]).toBe('item three');
         });
+
+		it('should parse multi line unordered list and trim items', function(){
+
+			var result = getListResult('# item one  \n#  item two\t\n# item three ');
+
+			expect(isSuccess(result)).toBe(true);
+			expect(result.list.kind).toBe(ListKinds.ol);
+			expect(result.list.items.length).toBe(3);
+			expect(result.list.items[0]).toBe('item one');
+			expect(result.list.items[1]).toBe('item two');
+			expect(result.list.items[2]).toBe('item three');
+		});
     });
+
+	describe('tryMakeBlockImage', function () {
+
+		function getImageResult(text){
+			var iterator = Tokenizer.createIterator(text);
+			return Parser.tryMakeBlockImage(iterator);
+		}
+
+		function expectValidImage(text, kind, path, alt){
+
+			var result = getImageResult(text);
+
+			expect(isSuccess(result)).toBe(true);
+			expect(result.img).toBeDefined();
+			expect(result.img.kind).toBe(kind);
+			expect(result.img.path).toBe(path);
+			expect(result.img.alt).toBe(alt || '');
+		}
+
+		it('should parse valid relative image', function(){
+			expectValidImage('!image.jpg!', ImageKinds.rel, 'image.jpg');
+		});
+
+		it('should parse valid relative image and forgive blanks', function(){
+			expectValidImage('  !image.jpg!  ', ImageKinds.rel, 'image.jpg');
+		});
+
+		it('should parse valid relative image with alt', function(){
+			expectValidImage('!image.jpg|hello!', ImageKinds.rel, 'image.jpg', 'hello');
+		});
+
+		it('should parse valid absolute http image', function(){
+			expectValidImage('!http://test.com/image.png!', ImageKinds.ext, 'http://test.com/image.png');
+		});
+
+		it('should parse valid absolute http image with alt', function(){
+			expectValidImage('!http://test.com/image.png|nice image!', ImageKinds.ext, 'http://test.com/image.png', 'nice image');
+		});
+
+		it('should parse valid absolute https image', function(){
+			expectValidImage('!https://test.com/image.png!', ImageKinds.ext, 'https://test.com/image.png');
+		});
+
+		it('should parse valid absolute current protocol image', function(){
+			expectValidImage('!//test.com/image.png!', ImageKinds.ext, '//test.com/image.png');
+		});
+
+		it('should return false if no image', function(){
+			expect(isSuccess(getImageResult('blah'))).toBe(false);
+		});
+	});
 
 	describe('tryMakeTextParagraph', function () {
 
@@ -267,6 +338,32 @@ describe('Parser', function(){
 			// nested unformatted
 			expect(bold.value[2].kind).toBe(TextKinds.none);
 			expect(bold.value[2].value).toBe(' today');
+		});
+	});
+
+	describe('tryMakeBlockQuote', function () {
+
+		function getQuoteResult(text){
+			var iterator = Tokenizer.createIterator(text);
+			return Parser.tryMakeBlockQuote(iterator);
+		}
+
+		function expectValidQuote(text, quote){
+			var result = getQuoteResult(text);
+			expect(isSuccess(result)).toBe(true);
+			expect(result.bq.text).toBe(quote);
+		}
+
+		it('should parse valid block quote', function(){
+			expectValidQuote('bq. a wise man once said...', 'a wise man once said...');
+		});
+
+		it('should parse valid block quote and forgive blanks', function(){
+			expectValidQuote('  bq. a wise man once said...  ', 'a wise man once said...');
+		});
+
+		it('should return false fo invalid block quote', function(){
+			expect(isSuccess(getQuoteResult('bq testing'))).toBe(false);
 		});
 	});
 

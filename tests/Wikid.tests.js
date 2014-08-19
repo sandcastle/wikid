@@ -67,6 +67,44 @@ describe('Wikid', function () {
 			});
 		});
 
+		describe('block image', function () {
+
+			it('should render relative image', function(){
+				expect(Wikid.toHtml('!image.jpg!')).toBe('<img src="image.jpg" alt=""><br>');
+			});
+
+			it('should render relative image with alt', function(){
+				expect(Wikid.toHtml('!image.jpg|hello world!')).toBe('<img src="image.jpg" alt="hello world"><br>');
+			});
+
+			it('should render relative image with relative path (no trailing slash) from settings', function(){
+				expect(Wikid.toHtml('!image.jpg!', { imagePath: '/images' })).toBe('<img src="/images/image.jpg" alt=""><br>');
+			});
+
+			it('should render relative image with relative path from settings', function(){
+				expect(Wikid.toHtml('!image.jpg!', { imagePath: '/images/' })).toBe('<img src="/images/image.jpg" alt=""><br>');
+			});
+
+			it('should render relative image with absolute path from settings', function(){
+				expect(Wikid.toHtml('!image.jpg!', { imagePath: 'http://test.com/' })).toBe('<img src="http://test.com/image.jpg" alt=""><br>');
+			});
+
+			it('should render relative image with absolute path (no trailing slash) from settings', function(){
+				expect(Wikid.toHtml('!image.jpg!', { imagePath: 'http://test.com' })).toBe('<img src="http://test.com/image.jpg" alt=""><br>');
+			});
+		});
+
+		describe('block quote', function () {
+
+			it('should render block quote', function(){
+				expect(Wikid.toHtml('bq. a wise man once said...')).toBe('<blockquote>a wise man once said...</blockquote>');
+			});
+
+			it('should render block quote and forgive blanks', function(){
+				expect(Wikid.toHtml('  bq.   a wise man once said...  ')).toBe('<blockquote>a wise man once said...</blockquote>');
+			});
+		});
+
     });
 
 });
