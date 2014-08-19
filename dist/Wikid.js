@@ -99,14 +99,10 @@
     function appendImage(para) {
 
       var path = para.content.path;
-      var imagePath = settings.imagePath || '';
 
       // if we specify an
-      if (para.content.kind == ImageKinds.rel && imagePath.length > 0) {
-
-        // ensure there is a trailing slash
-        var absolute = (imagePath.substr(imagePath.length - 1) === '/') ? imagePath : imagePath + '/';
-        path = absolute + path;
+      if (para.content.kind == ImageKinds.rel && settings.imagePath) {
+        path = getPathWithSlash(settings.imagePath) + path;
       }
 
       output += format('<img src="{0}" alt="{1}">', path, para.content.alt);
@@ -122,8 +118,13 @@
         part = parts[j];
 
         // skip nesting if not formatted
-        if (part.kind == TextKinds.none) {
+        if (part.kind === TextKinds.none) {
           text += part.value;
+          continue;
+        }
+
+        if (part.kind === TextKinds.a) {
+          text += getLinkText(part);
           continue;
         }
 
@@ -158,6 +159,31 @@
       return text;
     }
 
+    function getLinkText(part) {
+
+      var link = part.value;
+
+      switch (link.kind) {
+
+        case LinkKinds.anc:
+          return format('<a name="{0}"></a>', link.value);
+
+        case LinkKinds.ext:
+          return format('<a href="{0}">{1}</a>', link.value, link.text);
+
+        case LinkKinds.att:
+          return format('<a href="{0}">{1}</a>', (getPathWithSlash(settings.attachPath) + link.value), link.text);
+
+        case LinkKinds.gto:
+          return format('<a href="#{0}">{1}</a>', link.value, link.text);
+
+        case LinkKinds.eml:
+          return format('<a href="mailto:{0}">{1}</a>', link.value, link.text);
+      }
+
+      return '';
+    }
+
     function appendHeading(para) {
       output += format('<h{0}>{1}</h{0}>', para.content.number, para.content.text);
     }
@@ -167,15 +193,29 @@
       var isOrdered = (para.content.kind == ListKinds.ol);
       output += isOrdered ? '<ol>' : '<ul>';
 
-      for (j = 0; j < para.content.items.length; j++) {
-
-        //TODO: add formatting inside items
-        output += format('<li>{0}</li>', para.content.items[j]);
+      for (var x = 0; x < para.content.items.length; x++) {
+        output += format('<li>{0}</li>', getTextFromParts(para.content.items[x].parts));
       }
 
       output += isOrdered ? '</ol>' : '</ul>';
     }
   };
+
+  /**
+   * @description
+   * Returns the path with a tailing slash if specified, otherwise an empty string.
+   *
+   * @param {string} path The path.
+   * @returns {string}
+   */
+  function getPathWithSlash(path) {
+
+    if (!path || path.length === 0) {
+      return '';
+    }
+
+    return (path.substr(path.length - 1) === '/') ? path : path + '/';
+  }
 
   /**
    * @description
@@ -744,6 +784,7 @@
   ParagraphKinds.rule = 4; // horizontal rule
   ParagraphKinds.img = 5; // block image
   ParagraphKinds.bq = 6; // block quote
+  ParagraphKinds.tbl = 7; // table
 
   /**
    * @param {number} kind
@@ -840,9 +881,10 @@
    * @param {object} value
    * @constructor
    */
-  function Link(kind, value) {
+  function Link(kind, value, text) {
     this.kind = kind;
     this.value = value;
+    this.text = text || '';
   }
 
   function LinkKinds() {
@@ -851,6 +893,7 @@
   LinkKinds.att = 1; // attachment
   LinkKinds.anc = 2; // internal anchor definition
   LinkKinds.gto = 3; // internal anchor goto
+  LinkKinds.eml = 4; // email (mailto)
 
   /**
    * @description
@@ -954,6 +997,12 @@
       return new Paragraph(ParagraphKinds.bq, quoteResult.bq);
     }
 
+    //table
+    var tableResult = Parser.tryMakeTable(iterator);
+    if (isSuccess(tableResult)) {
+      return new Paragraph(ParagraphKinds.tbl, tableResult.tbl);
+    }
+
     // text
     var textResult = Parser.tryMakeTextParagraph(iterator);
     if (isSuccess(textResult)) {
@@ -961,6 +1010,21 @@
     }
 
     return null;
+  };
+
+  /**
+   * @description
+   * Tries to parse a table.
+   *
+   * @param {TokenIterator} iterator The token iterator.
+   * @returns {Object}
+   */
+  Parser.tryMakeTable = function(iterator) {
+
+    // TODO: implement table support
+    return {
+      success: false
+    };
   };
 
   /**
@@ -1077,7 +1141,7 @@
       }
 
       // if formatted, check for nesting
-      if (result.part.kind != TextKinds.none) {
+      if (result.part.kind != TextKinds.none && result.part.kind != TextKinds.a) {
 
         // create an iterator from the tokens
         var nestedIterator = new TokenIterator(result.part.value || []);
@@ -1197,9 +1261,117 @@
       return result;
     }
 
+    result = Parser.tryMakeLink(iterator);
+    if (isSuccess(result)) {
+      return {
+        success: true,
+        part: new TextPart(TextKinds.a, result.link)
+      };
+    }
+
     return {
       success: false
     };
+  };
+
+  /**
+   * @description
+   * Tries to parse a link.
+   *
+   * @param {TokenIterator} iterator The token iterator.
+   */
+  Parser.tryMakeLink = function(iterator) {
+
+    return consumeIf(iterator, tryGetLink);
+
+    function tryGetLink(iterator) {
+
+      if (iterator.eof() || iterator.peek().text !== '[') {
+        return {
+          success: false
+        };
+      }
+
+      var found = false,
+        text = '';
+
+      while (true) {
+
+        // if eof or end of line reached, we didn't find the closing token
+        if (iterator.eof() || iterator.peek().kind == TokenKinds.newline) {
+          return {
+            success: false
+          };
+        }
+
+        var token = iterator.consume();
+        text += token.text;
+
+        // if we find a closing token, success!
+        if (token.text === ']') {
+          found = true;
+          break;
+        }
+      }
+
+      // attachment ([attach:file.doc])
+      var match = /^\[\s*attach:\s*([^\]]+?)\s*\]$/.exec(text);
+      if (match) {
+        return {
+          success: true,
+          link: new Link(LinkKinds.att, match[1], match[1])
+        }
+      }
+
+      // anchors ([a:name])
+      match = /^\[\s*a:\s*([^\]]+?)\s*\]$/.exec(text);
+      if (match) {
+        return {
+          success: true,
+          link: new Link(LinkKinds.anc, match[1])
+        }
+      }
+
+      // internal link ([goto:text|name])
+      match = /^\[\s*goto:\s*([^\]]+?)\s*\|\s*([^\]\|]+?)\s*\]$/.exec(text);
+      if (match) {
+        return {
+          success: true,
+          link: new Link(LinkKinds.gto, match[2], match[1])
+        }
+      }
+
+      // email ([mailto:test@testing.io])
+      match = /^\[\s*mailto:\s*([^\]]+?)\s*\]$/.exec(text);
+      if (match) {
+        return {
+          success: true,
+          link: new Link(LinkKinds.eml, match[1], match[1])
+        }
+      }
+
+      // external link - advanced ([text|http://text])
+      match = /^\[\s*([^\]]+?)\s*\|\s*([^\]\|]+?)\s*\]$/.exec(text);
+      if (match) {
+        return {
+          success: true,
+          link: new Link(LinkKinds.ext, match[2], match[1])
+        }
+      }
+
+      // external link - basic ([http://text])
+      match = /^\[\s*([^\]]+?)\s*\]$/.exec(text);
+      if (match) {
+        return {
+          success: true,
+          link: new Link(LinkKinds.ext, match[1], match[1])
+        }
+      }
+
+      return {
+        success: false
+      };
+    }
   };
 
   /**
@@ -1358,7 +1530,9 @@
           break;
         }
 
-        items.push(result.item.trim());
+        items.push({
+          parts: result.parts
+        });
       }
 
       if (items.length === 0) {
@@ -1384,9 +1558,13 @@
         };
       }
 
+      // parse the item text for nesting
+      var nestedIterator = Tokenizer.createIterator((match[2] || '').trim());
+      var itemParts = Parser.tryMakeTextParts(nestedIterator);
+
       return {
         success: true,
-        item: match[2]
+        parts: itemParts
       };
     }
   };
