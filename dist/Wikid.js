@@ -12,12 +12,15 @@
    * Parses the specified wiki markup and converts to html.
    *
    * @param {string} text The wiki markup.
+   * @param {object} [settings] The format settings.
    * @returns {string} The html representation of the wiki mark-up.
    */
-  Wikid.toHtml = function(text) {
+  Wikid.toHtml = function(text, settings) {
 
     var iterator = Tokenizer.createIterator(text);
     var article = Parser.parse(iterator);
+
+    settings = settings || {};
 
     var i,
       j,
@@ -46,8 +49,16 @@
           appendList(para);
           break;
 
+        case ParagraphKinds.img:
+          appendBlockImage(para);
+          break;
+
         case ParagraphKinds.rule:
           appendRule();
+          break;
+
+        case ParagraphKinds.bq:
+          appendBlockQuote(para);
           break;
       }
     }
@@ -71,6 +82,34 @@
       if (i < (article.paragraphs.length - 1)) {
         output += '<br>';
       }
+    }
+
+    function appendBlockQuote(para) {
+      output += format('<blockquote>{0}</blockquote>', para.content.text);
+    }
+
+    function appendBlockImage(para) {
+
+      appendImage(para);
+
+      // add line break for block images
+      output += '<br>';
+    }
+
+    function appendImage(para) {
+
+      var path = para.content.path;
+      var imagePath = settings.imagePath || '';
+
+      // if we specify an
+      if (para.content.kind == ImageKinds.rel && imagePath.length > 0) {
+
+        // ensure there is a trailing slash
+        var absolute = (imagePath.substr(imagePath.length - 1) === '/') ? imagePath : imagePath + '/';
+        path = absolute + path;
+      }
+
+      output += format('<img src="{0}" alt="{1}">', path, para.content.alt);
     }
 
     function getTextFromParts(parts) {
@@ -698,11 +737,13 @@
 
   function ParagraphKinds() {
   }
-  ParagraphKinds.blank = 0;
-  ParagraphKinds.text = 1;
-  ParagraphKinds.heading = 2;
-  ParagraphKinds.list = 3;
-  ParagraphKinds.rule = 4;
+  ParagraphKinds.blank = 0; // blank line
+  ParagraphKinds.text = 1; // text paragraph
+  ParagraphKinds.heading = 2; // heading (1-6)
+  ParagraphKinds.list = 3; // list (ordered or unordered)
+  ParagraphKinds.rule = 4; // horizontal rule
+  ParagraphKinds.img = 5; // block image
+  ParagraphKinds.bq = 6; // block quote
 
   /**
    * @param {number} kind
@@ -722,6 +763,14 @@
   function Heading(number, text) {
     this.number = number;
     this.text = text || '';
+  }
+
+  /**
+   * @param {string} text
+   * @constructor
+   */
+  function Quote(text) {
+    this.text = text;
   }
 
   /**
@@ -759,13 +808,49 @@
 
   function TextKinds() {
   }
-  TextKinds.none = 0;
-  TextKinds.b = 1;
-  TextKinds.em = 2;
-  TextKinds.ins = 3;
-  TextKinds.del = 4;
-  TextKinds.sup = 5;
-  TextKinds.sub = 6;
+  TextKinds.none = 0; // unformatted
+  TextKinds.b = 1; // bold
+  TextKinds.em = 2; // italic
+  TextKinds.ins = 3; // underline
+  TextKinds.del = 4; // strike through
+  TextKinds.sup = 5; // super script
+  TextKinds.sub = 6; // sub script
+  TextKinds.img = 7; // image - not supported yet
+  TextKinds.a = 8; // link
+
+  /**
+   * @param {number} kind The image kind.
+   * @param {string} path The image path (relative or absolute).
+   * @param {string} [alt] The alternative text.
+   * @constructor
+   */
+  function Image(kind, path, alt) {
+    this.kind = kind;
+    this.path = path;
+    this.alt = alt || '';
+  }
+
+  function ImageKinds() {
+  }
+  ImageKinds.rel = 0; // relative path
+  ImageKinds.ext = 1; // absolute (external) path
+
+  /**
+   * @param {LinkKinds} kind
+   * @param {object} value
+   * @constructor
+   */
+  function Link(kind, value) {
+    this.kind = kind;
+    this.value = value;
+  }
+
+  function LinkKinds() {
+  }
+  LinkKinds.ext = 0; // external
+  LinkKinds.att = 1; // attachment
+  LinkKinds.anc = 2; // internal anchor definition
+  LinkKinds.gto = 3; // internal anchor goto
 
   /**
    * @description
@@ -857,6 +942,18 @@
       return new Paragraph(ParagraphKinds.list, listResult.list);
     }
 
+    // image
+    var imgResult = Parser.tryMakeBlockImage(iterator);
+    if (isSuccess(imgResult)) {
+      return new Paragraph(ParagraphKinds.img, imgResult.img);
+    }
+
+    // block quote
+    var quoteResult = Parser.tryMakeBlockQuote(iterator);
+    if (isSuccess(quoteResult)) {
+      return new Paragraph(ParagraphKinds.bq, quoteResult.bq);
+    }
+
     // text
     var textResult = Parser.tryMakeTextParagraph(iterator);
     if (isSuccess(textResult)) {
@@ -864,6 +961,68 @@
     }
 
     return null;
+  };
+
+  /**
+   * @description
+   * Tries to parse a block quote.
+   *
+   * @param {TokenIterator} iterator The token iterator.
+   * @returns {Object}
+   */
+  Parser.tryMakeBlockQuote = function(iterator) {
+
+    return consumeIf(iterator, tryGetQuote);
+
+    function tryGetQuote(iterator) {
+
+      var line = consumeLine(iterator);
+
+      var match = /^\s*bq\.\s+(.+)\s*$/.exec(line);
+      if (match === null) {
+        return {
+          success: false
+        };
+      }
+
+      return {
+        success: true,
+        bq: new Quote(match[1].trim())
+      };
+    }
+  };
+
+  /**
+   * @description
+   * Tries to parse a block image.
+   *
+   * @param {TokenIterator} iterator The token iterator.
+   * @returns {Object}
+   */
+  Parser.tryMakeBlockImage = function(iterator) {
+
+    return consumeIf(iterator, tryGetBlockImage);
+
+    function tryGetBlockImage(iterator) {
+
+      var line = consumeLine(iterator);
+
+      // match image and optional alt tag
+      var match = /^\s*!([^!\|]+)(?:\|([^!\|]+))?!\s*$/.exec(line);
+      if (match === null) {
+        return {
+          success: false
+        };
+      }
+
+      // check if we are dealing with relative or absolute (http, https or current protocol only)
+      var kind = /^\s*!(?:(?:http|https)\:)?\/\/.*!\s*$/.test(line) ? ImageKinds.ext : ImageKinds.rel;
+
+      return {
+        success: true,
+        img: new Image(kind, match[1], match[2])
+      };
+    }
   };
 
   /**
@@ -1124,7 +1283,7 @@
     function tryConsumeHyphens(iterator) {
 
       var line = consumeLine(iterator);
-      var result = /^(\-){4}\s*$/.test(line);
+      var result = /^\s*(\-){4}\s*$/.test(line);
 
       return {
         success: result
@@ -1147,7 +1306,7 @@
 
       var line = consumeLine(iterator);
 
-      var match = /^h([1-6]).\s+(.+)$/.exec(line);
+      var match = /^\s*h([1-6]).\s+(.+)\s*$/.exec(line);
       if (match === null || match.length !== 3) {
         return {
           success: false
@@ -1156,7 +1315,7 @@
 
       return {
         success: true,
-        heading: new Heading(parseInt(match[1]), match[2])
+        heading: new Heading(parseInt(match[1]), match[2].trim())
       };
     }
   };
@@ -1199,7 +1358,7 @@
           break;
         }
 
-        items.push(result.item);
+        items.push(result.item.trim());
       }
 
       if (items.length === 0) {
@@ -1281,17 +1440,6 @@
     }
 
     return result;
-  }
-
-  function consumeLineAsTokens(iterator) {
-
-    var tokens = [];
-
-    while (!iterator.eof() && iterator.peek().kind != TokenKinds.newline) {
-      tokens.push(iterator.consume());
-    }
-
-    return tokens;
   }
 
   /**
