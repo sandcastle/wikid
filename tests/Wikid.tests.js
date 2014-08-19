@@ -16,16 +16,23 @@ describe('Wikid', function () {
 			expect(Wikid.toHtml('----')).toBe('<hr>');
 		});
 
-		it('should render ordered list', function(){
-			expect(Wikid.toHtml('# item one\n# item two')).toBe('<ol><li>item one</li><li>item two</li></ol>');
-		});
-
-		it('should render unordered list', function(){
-			expect(Wikid.toHtml('* item one\n* item two')).toBe('<ul><li>item one</li><li>item two</li></ul>');
-		});
-
 		it('should render heading and unformatted text', function(){
 			expect(Wikid.toHtml('h1. Welcome\nHow are you?')).toBe('<h1>Welcome</h1>How are you?');
+		});
+
+		describe('lists', function() {
+
+			it('should render ordered list', function(){
+				expect(Wikid.toHtml('# item one\n# item two')).toBe('<ol><li>item one</li><li>item two</li></ol>');
+			});
+
+			it('should render unordered list', function(){
+				expect(Wikid.toHtml('* item one\n* item two')).toBe('<ul><li>item one</li><li>item two</li></ul>');
+			});
+
+			it('should render unordered list with nested formatting', function(){
+				expect(Wikid.toHtml('* item *one*\n* item [two|http://test.com]')).toBe('<ul><li>item <b>one</b></li><li>item <a href="http://test.com">two</a></li></ul>');
+			});
 		});
 
 		describe('text', function () {

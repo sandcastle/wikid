@@ -146,7 +146,7 @@ describe('Parser', function(){
             expect(result.list.kind).toBe(ListKinds.ul);
             expect(result.list.items).toBeDefined();
             expect(result.list.items.length).toBe(1);
-            expect(result.list.items[0]).toBe('an item');
+            expect(result.list.items[0].parts[0].value).toBe('an item');
         });
 
         it('should parse single line unordered (star) list', function(){
@@ -157,7 +157,7 @@ describe('Parser', function(){
             expect(result.list.kind).toBe(ListKinds.ul);
             expect(result.list.items).toBeDefined();
             expect(result.list.items.length).toBe(1);
-            expect(result.list.items[0]).toBe('an item');
+            expect(result.list.items[0].parts[0].value).toBe('an item');
         });
 
         it('should parse multi line unordered list', function(){
@@ -167,9 +167,9 @@ describe('Parser', function(){
             expect(isSuccess(result)).toBe(true);
             expect(result.list.kind).toBe(ListKinds.ul);
             expect(result.list.items.length).toBe(3);
-            expect(result.list.items[0]).toBe('item one');
-            expect(result.list.items[1]).toBe('item two');
-            expect(result.list.items[2]).toBe('item three');
+            expect(result.list.items[0].parts[0].value).toBe('item one');
+            expect(result.list.items[1].parts[0].value).toBe('item two');
+            expect(result.list.items[2].parts[0].value).toBe('item three');
         });
 
         it('should parse single line ordered list', function(){
@@ -180,7 +180,7 @@ describe('Parser', function(){
             expect(result.list.kind).toBe(ListKinds.ol);
             expect(result.list.items).toBeDefined();
             expect(result.list.items.length).toBe(1);
-            expect(result.list.items[0]).toBe('an item');
+            expect(result.list.items[0].parts[0].value).toBe('an item');
         });
 
         it('should parse multi line ordered list', function(){
@@ -190,9 +190,9 @@ describe('Parser', function(){
             expect(isSuccess(result)).toBe(true);
             expect(result.list.kind).toBe(ListKinds.ol);
             expect(result.list.items.length).toBe(3);
-            expect(result.list.items[0]).toBe('item one');
-            expect(result.list.items[1]).toBe('item two');
-            expect(result.list.items[2]).toBe('item three');
+            expect(result.list.items[0].parts[0].value).toBe('item one');
+            expect(result.list.items[1].parts[0].value).toBe('item two');
+            expect(result.list.items[2].parts[0].value).toBe('item three');
         });
 
 		it('should parse multi line unordered list and trim items', function(){
@@ -202,9 +202,36 @@ describe('Parser', function(){
 			expect(isSuccess(result)).toBe(true);
 			expect(result.list.kind).toBe(ListKinds.ol);
 			expect(result.list.items.length).toBe(3);
-			expect(result.list.items[0]).toBe('item one');
-			expect(result.list.items[1]).toBe('item two');
-			expect(result.list.items[2]).toBe('item three');
+			expect(result.list.items[0].parts[0].value).toBe('item one');
+			expect(result.list.items[1].parts[0].value).toBe('item two');
+			expect(result.list.items[2].parts[0].value).toBe('item three');
+		});
+
+		it('should parse multi line unordered list with nested formatting and trim items', function(){
+
+			var result = getListResult('# item *one*  \n#  item [hello|http://test.com]\t\n# item three ');
+
+			expect(isSuccess(result)).toBe(true);
+			expect(result.list.kind).toBe(ListKinds.ol);
+			expect(result.list.items.length).toBe(3);
+
+			//part 1
+			expect(result.list.items[0].parts[0].kind).toBe(TextKinds.none);
+			expect(result.list.items[0].parts[0].value).toBe('item ');
+			expect(result.list.items[0].parts[1].kind).toBe(TextKinds.b);
+			expect(result.list.items[0].parts[1].value[0].kind).toBe(TextKinds.none);
+			expect(result.list.items[0].parts[1].value[0].value).toBe('one');
+
+			// part 2
+			expect(result.list.items[1].parts[0].kind).toBe(TextKinds.none);
+			expect(result.list.items[1].parts[0].value).toBe('item ');
+			expect(result.list.items[1].parts[1].kind).toBe(TextKinds.a);
+			expect(result.list.items[1].parts[1].value.value).toBe('http://test.com');
+			expect(result.list.items[1].parts[1].value.text).toBe('hello');
+
+			// part 3
+			expect(result.list.items[2].parts[0].kind).toBe(TextKinds.none);
+			expect(result.list.items[2].parts[0].value).toBe('item three');
 		});
     });
 
