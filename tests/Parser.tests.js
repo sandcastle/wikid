@@ -313,6 +313,33 @@ describe('Parser', function(){
 			expectTextFormatPart('+hello+', TextKinds.em, 'hello');
 		});
 
+		it('should parse italic text', function () {
+			expectTextFormatPart('_hello_', TextKinds.ins, 'hello');
+		});
+
+		it('should parse italic text', function () {
+			expectTextFormatPart('-hello-', TextKinds.del, 'hello');
+		});
+
+		it('should parse italic text', function () {
+			expectTextFormatPart('^hello^', TextKinds.sup, 'hello');
+		});
+
+		it('should parse italic text', function () {
+			expectTextFormatPart('~hello~', TextKinds.sub, 'hello');
+		});
+
+		it('should parse link', function () {
+
+			var result = getTextResult('[the link|http://test.com/]');
+			expect(isSuccess(result)).toBe(true);
+			expect(result.text.parts.length).toBe(1);
+			expect(result.text.parts[0].kind).toBe(TextKinds.a);
+			expect(result.text.parts[0].value.kind).toBe(LinkKinds.ext);
+			expect(result.text.parts[0].value.value).toBe('http://test.com/');
+			expect(result.text.parts[0].value.text).toBe('the link');
+		});
+
 		it('should parse nested format text', function () {
 
 			var result = getTextResult('*hello +world+ today*');
@@ -364,6 +391,71 @@ describe('Parser', function(){
 
 		it('should return false fo invalid block quote', function(){
 			expect(isSuccess(getQuoteResult('bq testing'))).toBe(false);
+		});
+	});
+
+	describe('tryMakeLink', function () {
+
+		function getLinkResult(text){
+			var iterator = Tokenizer.createIterator(text);
+			return Parser.tryMakeLink(iterator);
+		}
+
+		it('should parse attachment', function () {
+
+			// attachment ([attach:file.doc])
+			var result = getLinkResult('[attach:file.txt]');
+			expect(isSuccess(result)).toBe(true);
+			expect(result.link.kind).toBe(LinkKinds.att);
+			expect(result.link.value).toBe('file.txt');
+		});
+
+		it('should parse internal anchor', function () {
+
+			// anchors ([a:name])
+			var result = getLinkResult('[a:section-1]');
+			expect(isSuccess(result)).toBe(true);
+			expect(result.link.kind).toBe(LinkKinds.anc);
+			expect(result.link.value).toBe('section-1');
+		});
+
+		it('should parse internal anchor', function () {
+
+			// internal link ([goto:text|name])
+			var result = getLinkResult('[goto:Section 1|section-1]');
+			expect(isSuccess(result)).toBe(true);
+			expect(result.link.kind).toBe(LinkKinds.gto);
+			expect(result.link.value).toBe('section-1');
+			expect(result.link.text).toBe('Section 1');
+		});
+
+		it('should parse internal anchor', function () {
+
+			// email ([mailto:test@testing.io])
+			var result = getLinkResult('[mailto:test@testing.io]');
+			expect(isSuccess(result)).toBe(true);
+			expect(result.link.kind).toBe(LinkKinds.eml);
+			expect(result.link.value).toBe('test@testing.io');
+		});
+
+		it('should parse internal anchor', function () {
+
+			// external link - advanced ([text|http://text])
+			var result = getLinkResult('[the link|http://text]');
+			expect(isSuccess(result)).toBe(true);
+			expect(result.link.kind).toBe(LinkKinds.ext);
+			expect(result.link.value).toBe('http://text');
+			expect(result.link.text).toBe('the link');
+		});
+
+		it('should parse internal anchor', function () {
+
+			// external link - basic ([http://text])
+			var result = getLinkResult('[http://text]');
+			expect(isSuccess(result)).toBe(true);
+			expect(result.link.kind).toBe(LinkKinds.ext);
+			expect(result.link.value).toBe('http://text');
+			expect(result.link.text).toBe('http://text');
 		});
 	});
 
