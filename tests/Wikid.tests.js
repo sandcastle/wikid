@@ -105,6 +105,45 @@ describe('Wikid', function () {
 			});
 		});
 
+		describe('links', function() {
+
+			it('should render an basic external link', function () {
+				expect(Wikid.toHtml('[http://test.com]')).toBe('<a href="http://test.com">http://test.com</a>');
+			});
+
+			it('should render an advanced external link', function () {
+				expect(Wikid.toHtml('[the link|http://test.com]')).toBe('<a href="http://test.com">the link</a>');
+			});
+
+			it('should render an basic external link and forgive blanks', function () {
+				expect(Wikid.toHtml('[  http://test.com  ]')).toBe('<a href="http://test.com">http://test.com</a>');
+			});
+
+			it('should render an advanced external link and forgive blanks', function () {
+				expect(Wikid.toHtml('[  the link  |  http://test.com  ]')).toBe('<a href="http://test.com">the link</a>');
+			});
+
+			it('should render an internal anchor', function () {
+				expect(Wikid.toHtml('[a:section-1]')).toBe('<a name="section-1"></a>');
+			});
+
+			it('should render an internal link', function () {
+				expect(Wikid.toHtml('[goto:Section 1|section-1]')).toBe('<a href="#section-1">Section 1</a>');
+			});
+
+			it('should render an email', function () {
+				expect(Wikid.toHtml('[mailto:test@test.com]')).toBe('<a href="mailto:test@test.com">test@test.com</a>');
+			});
+
+			it('should render an attachment', function () {
+				expect(Wikid.toHtml('[attach:file.txt]')).toBe('<a href="file.txt">file.txt</a>');
+			});
+
+			it('should render an attachment with settings', function () {
+				expect(Wikid.toHtml('[attach:file.txt]', { attachPath: 'http://test.com/' })).toBe('<a href="http://test.com/file.txt">file.txt</a>');
+			});
+		});
+
     });
 
 });
