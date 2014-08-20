@@ -17,10 +17,11 @@
    */
   Wikid.toHtml = function(text, settings) {
 
+    text = text || '';
+    settings = settings || {};
+
     var iterator = Tokenizer.createIterator(text);
     var article = Parser.parse(iterator);
-
-    settings = settings || {};
 
     var i,
       j,
@@ -169,7 +170,7 @@
           return format('<a name="{0}"></a>', link.value);
 
         case LinkKinds.ext:
-          return format('<a href="{0}">{1}</a>', link.value, link.text);
+          return format('<a href="{0}" target="_blank">{1}</a>', link.value, link.text);
 
         case LinkKinds.att:
           return format('<a href="{0}">{1}</a>', (getPathWithSlash(settings.attachPath) + link.value), link.text);
@@ -525,6 +526,8 @@
    * @returns {Token[]} The tokens from the text.
    */
   Tokenizer.tokenize = function(text) {
+
+    text = text || '';
 
     // unicode categories adapted from http://xregexp.com/plugins/#unicode
     // char analysis adapted from https://github.com/mishoo/uglifyjs2

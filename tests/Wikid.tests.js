@@ -31,7 +31,7 @@ describe('Wikid', function () {
 			});
 
 			it('should render unordered list with nested formatting', function(){
-				expect(Wikid.toHtml('* item *one*\n* item [two|http://test.com]')).toBe('<ul><li>item <b>one</b></li><li>item <a href="http://test.com">two</a></li></ul>');
+				expect(Wikid.toHtml('* item *one*\n* item [two|http://test.com]')).toBe('<ul><li>item <b>one</b></li><li>item <a href="http://test.com" target="_blank">two</a></li></ul>');
 			});
 		});
 
@@ -115,19 +115,19 @@ describe('Wikid', function () {
 		describe('links', function() {
 
 			it('should render an basic external link', function () {
-				expect(Wikid.toHtml('[http://test.com]')).toBe('<a href="http://test.com">http://test.com</a>');
+				expect(Wikid.toHtml('[http://test.com]')).toBe('<a href="http://test.com" target="_blank">http://test.com</a>');
 			});
 
 			it('should render an advanced external link', function () {
-				expect(Wikid.toHtml('[the link|http://test.com]')).toBe('<a href="http://test.com">the link</a>');
+				expect(Wikid.toHtml('[the link|http://test.com]')).toBe('<a href="http://test.com" target="_blank">the link</a>');
 			});
 
 			it('should render an basic external link and forgive blanks', function () {
-				expect(Wikid.toHtml('[  http://test.com  ]')).toBe('<a href="http://test.com">http://test.com</a>');
+				expect(Wikid.toHtml('[  http://test.com  ]')).toBe('<a href="http://test.com" target="_blank">http://test.com</a>');
 			});
 
 			it('should render an advanced external link and forgive blanks', function () {
-				expect(Wikid.toHtml('[  the link  |  http://test.com  ]')).toBe('<a href="http://test.com">the link</a>');
+				expect(Wikid.toHtml('[  the link  |  http://test.com  ]')).toBe('<a href="http://test.com" target="_blank">the link</a>');
 			});
 
 			it('should render an internal anchor', function () {
