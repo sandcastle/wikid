@@ -23,6 +23,12 @@
     var iterator = Tokenizer.createIterator(text);
     var article = Parser.parse(iterator);
 
+    var EMAIL_REGEX = /^([A-Za-z0-9._%+-]+@\S*[^\s.;,(){}<>"])$/,
+      URI_REGEX = /^((ftp|https?):\/\/\S*[^\s.;,()\{\}<>"])$/,
+      ANCHOR_REGEX = /^[a-zA-Z0-9_\-]+$/,
+      SURROGATE_PAIR_REGEX = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
+      NON_ALPHANUMERIC_REGEX = /([^\#-~| |!])/g;
+
     var i,
       j,
       para,
@@ -86,7 +92,7 @@
     }
 
     function appendBlockQuote(para) {
-      output += format('<blockquote>{0}</blockquote>', para.content.text);
+      output += format('<blockquote>{0}</blockquote>', sanitizeText(para.content.text));
     }
 
     function appendBlockImage(para) {
@@ -101,12 +107,12 @@
 
       var path = para.content.path;
 
-      // if we specify an
-      if (para.content.kind == ImageKinds.rel && settings.imagePath) {
+      //if not an absolute uri and we have a path, then append
+      if (!/^(ftp|https?):\/\/.*/.test(path) && settings.imagePath) {
         path = getPathWithSlash(settings.imagePath) + path;
       }
 
-      output += format('<img src="{0}" alt="{1}">', path, para.content.alt);
+      output += format('<img src="{0}" alt="">', sanitizeUri(path));
     }
 
     function getTextFromParts(parts) {
@@ -120,7 +126,7 @@
 
         // skip nesting if not formatted
         if (part.kind === TextKinds.none) {
-          text += part.value;
+          text += sanitizeText(part.value);
           continue;
         }
 
@@ -167,26 +173,68 @@
       switch (link.kind) {
 
         case LinkKinds.anc:
-          return format('<a name="{0}"></a>', link.value);
-
-        case LinkKinds.ext:
-          return format('<a href="{0}" target="_blank">{1}</a>', link.value, link.text);
-
-        case LinkKinds.att:
-          return format('<a href="{0}">{1}</a>', (getPathWithSlash(settings.attachPath) + link.value), link.text);
+          return renderAnchorOnlyIfValid(link.value);
 
         case LinkKinds.gto:
-          return format('<a href="#{0}">{1}</a>', link.value, link.text);
+          return renderGotoOnlyIfValid(link.value, link.text);
 
         case LinkKinds.eml:
-          return format('<a href="mailto:{0}">{1}</a>', link.value, link.text);
+          return renderMailtoOnlyIfValid(link.value);
+
+        case LinkKinds.ext:
+          return renderLinkOnlyIfValid(link.value, link.text);
+
+        case LinkKinds.att:
+          return renderLinkOnlyIfValid((getPathWithSlash(settings.attachPath) + link.value), link.text);
       }
 
       return '';
+
+      function renderAnchorOnlyIfValid(name) {
+
+        var clean = sanitizeAnchor(name);
+        if (clean === '') {
+          return sanitizeText(text);
+        }
+
+        return format('<a name="{0}"></a>', name);
+      }
+
+      function renderGotoOnlyIfValid(name, text) {
+
+        var clean = sanitizeAnchor(name);
+        if (clean === '') {
+          return sanitizeText(text);
+        }
+
+        return format('<a href="#{0}">{1}</a>', clean, sanitizeText(text));
+      }
+
+      function renderMailtoOnlyIfValid(email) {
+
+        // if the email is unsafe then render text only
+        var clean = sanitizeEmail(email);
+        if (clean === '') {
+          return '';
+        }
+
+        return format('<a href="mailto:{0}">{1}</a>', clean, sanitizeText(email));
+      }
+
+      function renderLinkOnlyIfValid(uri, text) {
+
+        // if the link is unsafe then render text only
+        var clean = sanitizeUri(uri);
+        if (clean === '') {
+          return sanitizeText(text);
+        }
+
+        return format('<a href="{0}" target="_blank">{1}</a>', clean, sanitizeText(text));
+      }
     }
 
     function appendHeading(para) {
-      output += format('<h{0}>{1}</h{0}>', para.content.number, para.content.text);
+      output += format('<h{0}>{1}</h{0}>', para.content.number, sanitizeText(para.content.text));
     }
 
     function appendList(para) {
@@ -200,23 +248,78 @@
 
       output += isOrdered ? '</ol>' : '</ul>';
     }
-  };
 
-  /**
-   * @description
-   * Returns the path with a tailing slash if specified, otherwise an empty string.
-   *
-   * @param {string} path The path.
-   * @returns {string}
-   */
-  function getPathWithSlash(path) {
+    function sanitizeAnchor(name) {
 
-    if (!path || path.length === 0) {
+      if (ANCHOR_REGEX.test(name)) {
+        return name;
+      }
+
       return '';
     }
 
-    return (path.substr(path.length - 1) === '/') ? path : path + '/';
-  }
+    function sanitizeEmail(uri) {
+
+      if (EMAIL_REGEX.test(uri)) {
+        return uri;
+      }
+
+      return '';
+    }
+
+    function sanitizeUri(uri) {
+
+      uri = encodeURI(uri);
+
+      if (URI_REGEX.test(uri)) {
+        return uri;
+      }
+
+      return '';
+    }
+
+    /**
+     * @description
+     * Encodes all all entities to protect against script injection.
+     *
+     * Adapted from angular.js - Misko Hevery (misko@hevery.com)
+     * https://github.com/angular/angular.js/blob/master/src/ngSanitize/sanitize.js
+     *
+     * @param value
+     * @returns {*}
+     */
+    function sanitizeText(value) {
+
+      return value.
+        replace(/&/g, '&amp;').
+        replace(SURROGATE_PAIR_REGEX, function(value) {
+          var hi = value.charCodeAt(0);
+          var low = value.charCodeAt(1);
+          return '&#' + (((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000) + ';';
+        }).
+        replace(NON_ALPHANUMERIC_REGEX, function(value) {
+          return '&#' + value.charCodeAt(0) + ';';
+        }).
+        replace(/</g, '&lt;').
+        replace(/>/g, '&gt;');
+    }
+
+    /**
+     * @description
+     * Returns the path with a tailing slash if specified, otherwise an empty string.
+     *
+     * @param {string} path The path.
+     * @returns {string}
+     */
+    function getPathWithSlash(path) {
+
+      if (!path || path.length === 0) {
+        return '';
+      }
+
+      return (path.substr(path.length - 1) === '/') ? path : path + '/';
+    }
+  };
 
   /**
    * @description
@@ -863,21 +966,12 @@
   TextKinds.a = 8; // link
 
   /**
-   * @param {number} kind The image kind.
-   * @param {string} path The image path (relative or absolute).
-   * @param {string} [alt] The alternative text.
+   * @param {string} path The image path.
    * @constructor
    */
-  function Image(kind, path, alt) {
-    this.kind = kind;
+  function Image(path) {
     this.path = path;
-    this.alt = alt || '';
   }
-
-  function ImageKinds() {
-  }
-  ImageKinds.rel = 0; // relative path
-  ImageKinds.ext = 1; // absolute (external) path
 
   /**
    * @param {LinkKinds} kind
@@ -901,6 +995,9 @@
   /**
    * @description
    * Parses an array of tokens to create an AST.
+   *
+   * The parser does not perform any more of sanitization to prevent against
+   * script injection, this needs to be managed by the render.
    */
   function Parser() {
   }
@@ -1074,20 +1171,17 @@
 
       var line = consumeLine(iterator);
 
-      // match image and optional alt tag
-      var match = /^\s*!([^!\|]+)(?:\|([^!\|]+))?!\s*$/.exec(line);
+      // match image
+      var match = /^\s*!([^!]+)!\s*$/.exec(line);
       if (match === null) {
         return {
           success: false
         };
       }
 
-      // check if we are dealing with relative or absolute (http, https or current protocol only)
-      var kind = /^\s*!(?:(?:http|https)\:)?\/\/.*!\s*$/.test(line) ? ImageKinds.ext : ImageKinds.rel;
-
       return {
         success: true,
-        img: new Image(kind, match[1], match[2])
+        img: new Image(match[1])
       };
     }
   };
@@ -1327,7 +1421,7 @@
       }
 
       // anchors ([a:name])
-      match = /^\[\s*a:\s*([^\]]+?)\s*\]$/.exec(text);
+      match = /^\[\s*a:\s*([a-zA-Z0-9_\-]+)\s*\]$/.exec(text);
       if (match) {
         return {
           success: true,
@@ -1336,7 +1430,7 @@
       }
 
       // internal link ([goto:text|name])
-      match = /^\[\s*goto:\s*([^\]]+?)\s*\|\s*([^\]\|]+?)\s*\]$/.exec(text);
+      match = /^\[\s*goto:\s*([^\]]+?)\s*\|\s*([a-zA-Z0-9_\-]+)\s*\]$/.exec(text);
       if (match) {
         return {
           success: true,
