@@ -4,10 +4,6 @@ describe('Wikid', function () {
 
     describe('toHtml', function () {
 
-        it('should render heading', function(){
-            expect(Wikid.toHtml('h1. test')).toBe('<h1>test</h1>');
-        });
-
 		it('should render blank', function(){
 			expect(Wikid.toHtml('  \n')).toBe('<br>');
 		});
@@ -16,8 +12,15 @@ describe('Wikid', function () {
 			expect(Wikid.toHtml('----')).toBe('<hr>');
 		});
 
-		it('should render heading and unformatted text', function(){
-			expect(Wikid.toHtml('h1. Welcome\nHow are you?')).toBe('<h1>Welcome</h1>How are you?');
+		describe('heading', function() {
+
+			it('should render heading', function(){
+				expect(Wikid.toHtml('h1. test')).toBe('<h1>test</h1>');
+			});
+
+			it('should render heading and unformatted text', function(){
+				expect(Wikid.toHtml('h1. Welcome\nHow are you?')).toBe('<h1>Welcome</h1>How are you?');
+			});
 		});
 
 		describe('lists', function() {
@@ -76,20 +79,12 @@ describe('Wikid', function () {
 
 		describe('block image', function () {
 
-			it('should render relative image', function(){
-				expect(Wikid.toHtml('!image.jpg!')).toBe('<img src="image.jpg" alt=""><br>');
+			it('should render empty src if relative image', function(){
+				expect(Wikid.toHtml('!image.jpg!')).toBe('<img src="" alt=""><br>');
 			});
 
-			it('should render relative image with alt', function(){
-				expect(Wikid.toHtml('!image.jpg|hello world!')).toBe('<img src="image.jpg" alt="hello world"><br>');
-			});
-
-			it('should render relative image with relative path (no trailing slash) from settings', function(){
-				expect(Wikid.toHtml('!image.jpg!', { imagePath: '/images' })).toBe('<img src="/images/image.jpg" alt=""><br>');
-			});
-
-			it('should render relative image with relative path from settings', function(){
-				expect(Wikid.toHtml('!image.jpg!', { imagePath: '/images/' })).toBe('<img src="/images/image.jpg" alt=""><br>');
+			it('should render empty src if path is relative', function(){
+				expect(Wikid.toHtml('!image.jpg!', { imagePath: '/images' })).toBe('<img src="" alt=""><br>');
 			});
 
 			it('should render relative image with absolute path from settings', function(){
@@ -113,6 +108,10 @@ describe('Wikid', function () {
 		});
 
 		describe('links', function() {
+
+			it('should render empty href if relative link', function () {
+				expect(Wikid.toHtml('[test.js]')).toBe('test.js');
+			});
 
 			it('should render an basic external link', function () {
 				expect(Wikid.toHtml('[http://test.com]')).toBe('<a href="http://test.com" target="_blank">http://test.com</a>');
@@ -142,12 +141,23 @@ describe('Wikid', function () {
 				expect(Wikid.toHtml('[mailto:test@test.com]')).toBe('<a href="mailto:test@test.com">test@test.com</a>');
 			});
 
-			it('should render an attachment', function () {
-				expect(Wikid.toHtml('[attach:file.txt]')).toBe('<a href="file.txt">file.txt</a>');
+			it('should render text only if attachment is relative', function () {
+				expect(Wikid.toHtml('[attach:file.txt]')).toBe('file.txt');
 			});
 
 			it('should render an attachment with settings', function () {
-				expect(Wikid.toHtml('[attach:file.txt]', { attachPath: 'http://test.com/' })).toBe('<a href="http://test.com/file.txt">file.txt</a>');
+				expect(Wikid.toHtml('[attach:file.txt]', { attachPath: 'http://test.com/' })).toBe('<a href="http://test.com/file.txt" target="_blank">file.txt</a>');
+			});
+		});
+
+		describe('sanitize', function() {
+
+			it('should encode html characters', function () {
+				expect(Wikid.toHtml('&<>')).toBe('&amp;&lt;&gt;');
+			});
+
+			it('should encode script tags', function () {
+				expect(Wikid.toHtml('<script>alert("pwnd!")</script>')).toBe('&lt;script&gt;alert(&#34;pwnd!&#34;)&lt;/script&gt;');
 			});
 		});
 

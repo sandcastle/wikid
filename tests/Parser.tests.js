@@ -242,43 +242,29 @@ describe('Parser', function(){
 			return Parser.tryMakeBlockImage(iterator);
 		}
 
-		function expectValidImage(text, kind, path, alt){
+		function expectValidImage(text, path){
 
 			var result = getImageResult(text);
 
 			expect(isSuccess(result)).toBe(true);
 			expect(result.img).toBeDefined();
-			expect(result.img.kind).toBe(kind);
 			expect(result.img.path).toBe(path);
-			expect(result.img.alt).toBe(alt || '');
 		}
 
 		it('should parse valid relative image', function(){
-			expectValidImage('!image.jpg!', ImageKinds.rel, 'image.jpg');
+			expectValidImage('!image.jpg!', 'image.jpg');
 		});
 
 		it('should parse valid relative image and forgive blanks', function(){
-			expectValidImage('  !image.jpg!  ', ImageKinds.rel, 'image.jpg');
-		});
-
-		it('should parse valid relative image with alt', function(){
-			expectValidImage('!image.jpg|hello!', ImageKinds.rel, 'image.jpg', 'hello');
+			expectValidImage('  !image.jpg!  ', 'image.jpg');
 		});
 
 		it('should parse valid absolute http image', function(){
-			expectValidImage('!http://test.com/image.png!', ImageKinds.ext, 'http://test.com/image.png');
-		});
-
-		it('should parse valid absolute http image with alt', function(){
-			expectValidImage('!http://test.com/image.png|nice image!', ImageKinds.ext, 'http://test.com/image.png', 'nice image');
+			expectValidImage('!http://test.com/image.png!', 'http://test.com/image.png');
 		});
 
 		it('should parse valid absolute https image', function(){
-			expectValidImage('!https://test.com/image.png!', ImageKinds.ext, 'https://test.com/image.png');
-		});
-
-		it('should parse valid absolute current protocol image', function(){
-			expectValidImage('!//test.com/image.png!', ImageKinds.ext, '//test.com/image.png');
+			expectValidImage('!https://test.com/image.png!', 'https://test.com/image.png');
 		});
 
 		it('should return false if no image', function(){
