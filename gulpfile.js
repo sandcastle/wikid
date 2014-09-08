@@ -31,7 +31,7 @@ var files = {
 
 // clean
 gulp.task('clean', function (cb) {
-	rimraf('./dest', cb);
+	rimraf('./dist', cb);
 });
 
 // test
