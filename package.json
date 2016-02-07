@@ -2,7 +2,7 @@
   "name": "wikid",
   "version": "0.1.9",
   "description": "A javascript wiki parser",
-  "main": "Wikid.js",
+  "main": "lib/Wikid.js",
   "scripts": {
     "build": "gulp",
     "test": "gulp test"
