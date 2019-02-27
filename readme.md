@@ -3,17 +3,16 @@ Wikid.js
 
 > A js based wiki parser
 
-[![Build Status](https://travis-ci.org/sandcastle/wikid.png)](https://travis-ci.org/sandcastle/wikid.png) 
-[![Bower version](https://badge.fury.io/bo/wikid.svg)](http://badge.fury.io/bo/wikid)
+[![Build Status](https://travis-ci.org/sandcastle/wikid.png)](https://travis-ci.org/sandcastle/wikid.png)
 
-So, why another markup language? I needed a js based wiki parser for my [claims.io](http://claims.io/) product. 
+So, why another markup language? I needed a js based wiki parser for my [claims.io](http://claims.io/) product.
 
 For most non-technical users [Markdown](http://daringfireball.net/projects/markdown/) can be hard to grasp (the double space line endings annoy me). I have used the wikis in both [JIRA](https://www.atlassian.com/software/jira) and [You Track](http://www.jetbrains.com/youtrack/) for many years, so decided to take the best parts of both languages and provide a javascript option.
 
 Installation
 ----------
 To install the Wikid.js parser execute one of the following commands.
-  
+
 Client side install:
 
 ```
@@ -40,13 +39,14 @@ Wiki Markup
 ----------
 _Coming soon_
 
-* [Text](#)  
-* [Headings](#)   
-* [Links](#)  
-* [Lists](#)  
-* [Images](#)  
-* [Attachments](#)  
-* [Tables](#)  
+
+* [Text](#)
+* [Headings](#)
+* [Links](#)
+* [Lists](#)
+* [Images](#)
+* [Attachments](#)
+* [Tables](#)
 * [Misc](#)
 
 
@@ -67,7 +67,7 @@ Article:
     Paragraph
         =   NoWikiBlock
         |   Blanks , ParagraphSeparator
-        |   [ Blanks ] 
+        |   [ Blanks ]
                 (   Heading
                 |   HorizontalRule
                 |   List
@@ -96,21 +96,21 @@ Text:
         |   TextBold
         ;
     TextUnformatted
-        =   UnicodeText - 
-            (   TextLineSeparator 
+        =   UnicodeText -
+            (   TextLineSeparator
             |   NoWiki
             |   TextFormatted
             )
         ;
     TextItalic
-        =   Plus , 
+        =   Plus ,
             (   {   UnicodeText
                 |   TextBold
                 }+
             ) - ( Plus | TextLineSeparator ) , Plus
         ;
     TextBold
-        =   Star , 
+        =   Star ,
             (   {   UnicodeText
                 |   TextItalic
                 }+
@@ -175,7 +175,7 @@ Lists:
         =   ( Star | Hyphen ) , ListItemContent
         ;
     ListOrdered
-        =   { ListOrderedItem }+ 
+        =   { ListOrderedItem }+
         ;
     ListOrderedItem
         =   Hash , ListItemContent
@@ -204,7 +204,7 @@ Basics:
         =   ?line feed?
         ;
     UnicodeText
-        =   { UnicodeCharacter }*   
+        =   { UnicodeCharacter }*
         ;
     UnicodeCharacter
         =   ?Unicode character?
@@ -215,8 +215,8 @@ Basics:
     EOF
         =   ?end of file?
         ;
-    Star    
-        =   "*" 
+    Star
+        =   "*"
         ;
     Hash
         =   "#"
@@ -227,8 +227,8 @@ Basics:
     Plus
         =   "+"
         ;
-    
-        
+
+
 
 Inspiration for this definition was derived from the [Creole](http://dirkriehle.com/wp-content/uploads/2008/01/a4-junghans.pdf) Grammar.
 

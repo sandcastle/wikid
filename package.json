@@ -1,8 +1,8 @@
 {
   "name": "wikid",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "A javascript wiki parser",
-  "main": "lib/Wikid.js",
+  "main": "dist/Wikid.js",
   "scripts": {
     "build": "gulp",
     "test": "gulp test"
@@ -24,6 +24,7 @@
   "homepage": "https://github.com/sandcastle/wikid",
   "dependencies": {},
   "devDependencies": {
+    "chai": "^3.5.0",
     "gulp": "^3.8.7",
     "gulp-concat-util": "^0.2.3",
     "gulp-esformatter": "^1.0.0",
@@ -37,6 +38,7 @@
     "karma": "^0.12.21",
     "karma-coverage": "^0.2.6",
     "karma-jasmine": "^0.1.5",
-    "karma-phantomjs-launcher": "^0.1.4"
+    "karma-phantomjs-launcher": "^0.1.4",
+    "mocha": "^2.4.5"
   }
 }

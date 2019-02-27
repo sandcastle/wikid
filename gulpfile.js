@@ -1,83 +1,83 @@
 
-var fs			= require('fs'),
-	gulp 		= require('gulp'),
-	karma 		= require('gulp-karma'),
-	rimraf 		= require('gulp-rimraf'),
-	concat 		= require('gulp-concat-util'),
-	uglify 		= require('gulp-uglify'),
-	rename 		= require('gulp-rename'),
-	size	 	= require('gulp-size'),
-	gutil 		= require('gulp-util'),
-	formatter 	= require('gulp-esformatter');
+var fs      = require('fs'),
+  gulp      = require('gulp'),
+  karma     = require('gulp-karma'),
+  rimraf    = require('gulp-rimraf'),
+  concat    = require('gulp-concat-util'),
+  uglify    = require('gulp-uglify'),
+  rename    = require('gulp-rename'),
+  size      = require('gulp-size'),
+  gutil     = require('gulp-util'),
+  formatter = require('gulp-esformatter');
 
 var files = {
 
-	// all files for executing tests
-	test: [
-		'tests/**/*.js'
-	],
+  // all files for executing tests
+  test: [
+    'tests/**/*.js'
+  ],
 
-	// all files for client build
-	output: [
-		'lib/Wikid.js',
-		'lib/TokenKinds.js',
-		'lib/Token.js',
-		'lib/TokenIterator.js',
-		'lib/Tokenizer.js',
-		'lib/AST.js',
-		'lib/Parser.js'
-	]
+  // all files for client build
+  output: [
+    'lib/Wikid.js',
+    'lib/TokenKinds.js',
+    'lib/Token.js',
+    'lib/TokenIterator.js',
+    'lib/Tokenizer.js',
+    'lib/AST.js',
+    'lib/Parser.js'
+  ]
 };
 
 // clean
 gulp.task('clean', function (cb) {
-	rimraf('./dist', cb);
+  rimraf('./dist', cb);
 });
 
 // test
-gulp.task('test', function() {
-	return gulp.src(files.output.concat(files.test))
-		.pipe(karma({ configFile: 'karma.conf.js' }))
-		.on('error', gutil.log);
+gulp.task('test', function () {
+  return gulp.src(files.output.concat(files.test))
+    .pipe(karma({ configFile: 'karma.conf.js' }))
+    .on('error', gutil.log);
 });
 
 // output files
-gulp.task('output', function(){
-	return gulp.src(files.output)
-		.pipe(concat('Wikid.js', { process: normalizeFiles }))
-		.pipe(concat.header(fs.readFileSync('./build/header')))
-		.pipe(concat.footer(fs.readFileSync('./build/footer')))
-		.pipe(formatter({indent: {value: '  '} }))
-		.pipe(size())
-		.pipe(gulp.dest('./dist/'))
-		.pipe(uglify())
-		.pipe(rename('Wikid.min.js'))
-		.pipe(size())
-		.pipe(gulp.dest('./dist/'))
-		.on('error', gutil.log);
+gulp.task('output', function () {
+  return gulp.src(files.output)
+    .pipe(concat('Wikid.js', { process: normalizeFiles }))
+    .pipe(concat.header(fs.readFileSync('./build/header')))
+    .pipe(concat.footer(fs.readFileSync('./build/footer')))
+    .pipe(formatter({ indent: { value: '  ' } }))
+    .pipe(size())
+    .pipe(gulp.dest('./dist/'))
+    .pipe(uglify())
+    .pipe(rename('Wikid.min.js'))
+    .pipe(size())
+    .pipe(gulp.dest('./dist/'))
+    .on('error', gutil.log);
 });
 
 
 gulp.task('build', [
-	'clean',
-	'output'
+  'clean',
+  'output'
 ]);
 
 
 gulp.task('default', [
-	'clean',
-	'test',
-	'output'
+  'clean',
+  'test',
+  'output'
 ]);
 
 /**
  * Trims the files and removes 'use strict' statements.
  */
-function normalizeFiles(src){
+function normalizeFiles(src) {
 
-	//trim the file
-	src = src.trim() + '\n';
+  //trim the file
+  src = src.trim() + '\n';
 
-	//remove duplicate 'use strict' statements
-	return src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1');
+  //remove duplicate 'use strict' statements
+  return src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1');
 }
